@@ -10,19 +10,69 @@ app.use(cors());
 const users = [];
 
 function checksExistsUserAccount(request, response, next) {
-  // Complete aqui
+  const { username } = request.headers;
+
+  const userAlreadyExists = users.find((user) => user.username === username);
+
+  if (!userAlreadyExists) {
+    return response.status(404).json({ error: "User not found"});
+  }
+
+  request.user = userAlreadyExists;
+
+  return next();
 }
 
 function checksCreateTodosUserAvailability(request, response, next) {
-  // Complete aqui
+  const { user } = request;
+
+  if (!user.pro && user.todos.length >= 10) {
+    return response.status(403).json({ error: "Free users can't add more than 10 todos"});
+  }
+
+  return next();
 }
 
 function checksTodoExists(request, response, next) {
-  // Complete aqui
+  const { username } = request.headers;
+
+  const { id } = request.params;
+
+  const userAlreadyExists = users.find((user) => user.username === username);
+
+  if (!userAlreadyExists) {
+    return response.status(404).json({ error: "User not found"});
+  }
+
+  if (!id.match("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[34][0-9a-fA-F]{3}-[89ab][0-9a-fA-F]{3}-[0-9a-fA-F]{12}")) {
+    return response.status(400).json({ error: "ID does't look like a valid UUID"});
+  }
+
+  const todoExists = userAlreadyExists.todos.find((todo) => todo.id === id);
+
+  if (!todoExists) {
+    return response.status(404).json({ error: "This User haven't a Todo with that ID"});
+  }
+
+  request.user = userAlreadyExists;
+
+  request.todo = todoExists;
+
+  return next();
 }
 
 function findUserById(request, response, next) {
-  // Complete aqui
+  const { id } = request.params;
+
+  const userExists = users.find((user) => user.id === id);
+
+  if (!userExists) {
+    return response.status(404).json({ error: "User not found"});
+  }
+
+  request.user = userExists;
+
+  return next();
 }
 
 app.post('/users', (request, response) => {
